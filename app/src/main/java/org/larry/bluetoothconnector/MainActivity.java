@@ -13,11 +13,13 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.SlidingDrawer;
 import android.widget.Toast;
 
 import org.larry.bluetoothconnector.adapter.BluetoothDeviceAdapter;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -33,7 +35,7 @@ public class MainActivity extends Activity {
 			String action = intent.getAction();
 			Log.v(LOG_TAG, "action : " + action);
 			if (action.equals(BluetoothDevice.ACTION_FOUND)) {
-				mDeviceList = new ArrayList<BluetoothDevice>();
+				mDeviceSearchProgress.setVisibility(View.GONE);
 				BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 				mDeviceList.add(device);
 				setDeviceAdapter();
@@ -44,6 +46,7 @@ public class MainActivity extends Activity {
 
 	private Button mDeviceSearchButton = null;
 	private ListView mDeviceListView = null;
+	private ProgressBar mDeviceSearchProgress = null;
 
 	private final int REQUEST_ENABLE_BLUETOOTH = 1000;
 
@@ -88,6 +91,9 @@ public class MainActivity extends Activity {
 		Log.i(LOG_TAG, "initView");
 		mDeviceSearchButton = (Button) findViewById(R.id.main_device_search);
 		mDeviceListView = (ListView) findViewById(R.id.main_device_list);
+		mDeviceSearchProgress = (ProgressBar) findViewById(R.id.main_device_search_progress);
+
+		mDeviceSearchProgress.setVisibility(View.GONE);
 
 		mDeviceSearchButton.setOnClickListener(onClickListener);
 		mDeviceListView.setOnItemClickListener(onItemClickListener);
@@ -100,6 +106,9 @@ public class MainActivity extends Activity {
 		if (mBluetoothAdapter != null) {
 			if (mBluetoothAdapter.isEnabled()) {
 				if (mBluetoothAdapter.startDiscovery()) {
+					mDeviceSearchProgress.setVisibility(View.VISIBLE);
+					mDeviceList = new ArrayList<BluetoothDevice>();
+					setDeviceAdapter();
 					Log.v(LOG_TAG, "startDiscovery");
 				} else {
 					Log.v(LOG_TAG, "startDiscovery fail");
@@ -114,8 +123,25 @@ public class MainActivity extends Activity {
 		Log.i(LOG_TAG, "-------------------------");
 	}
 
-	private void connectDevice() {
-		Log.i(LOG_TAG, "connectDevice");
+	private void paireDevice() {
+		Log.i(LOG_TAG, "paireDevice");
+		try {
+			Method method = mSelectedDevice.getClass().getMethod("createBond", (Class[]) null);
+			method.invoke(mSelectedDevice, (Object[]) null);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		Log.i(LOG_TAG, "-------------------------");
+	}
+
+	private void startCommunication() {
+		Log.i(LOG_TAG, "startCommunication");
+		Intent intent = new Intent(mActivity, CommunicationActivity.class);
+		Bundle bundle = new Bundle();
+
+		bundle.putParcelable("DEVICE", mSelectedDevice);
+		intent.putExtras(bundle);
+		startActivity(intent);
 		Log.i(LOG_TAG, "-------------------------");
 	}
 
@@ -142,6 +168,11 @@ public class MainActivity extends Activity {
 			mSelectedDevice = mDeviceList.get(position);
 			String message = String.format("%s | %s | %s", mSelectedDevice.getName(), mSelectedDevice.getAddress(), mSelectedDevice.getBondState());
 			Toast.makeText(mActivity, message, Toast.LENGTH_SHORT).show();
+			if (mSelectedDevice.getBondState() == BluetoothDevice.BOND_BONDED) {
+				startCommunication();
+			} else {
+				paireDevice();
+			}
 			Log.i(LOG_TAG, "-------------------------");
 		}
 	};

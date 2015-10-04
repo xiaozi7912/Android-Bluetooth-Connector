@@ -26,6 +26,14 @@
             android:text="Address"
             android:textColor="#ffffff"
             android:textSize="22sp"/>
+
+        <TextView
+            android:id="@+id/item_bluetooth_device_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Paired"
+            android:textColor="#ffffff"
+            android:textSize="22sp"/>
     </LinearLayout>
 
 </LinearLayout>

@@ -8,4 +8,5 @@ import android.widget.TextView;
 public class BluetoothDeviceViewHolder {
 	public TextView deviceName = null;
 	public TextView deviceAddress = null;
+	public TextView deviceStatus = null;
 }

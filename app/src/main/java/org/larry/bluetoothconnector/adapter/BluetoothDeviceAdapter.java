@@ -53,12 +53,18 @@ public class BluetoothDeviceAdapter extends BaseAdapter {
 			viewHolder = new BluetoothDeviceViewHolder();
 			viewHolder.deviceName = (TextView) convertView.findViewById(R.id.item_bluetooth_device_name);
 			viewHolder.deviceAddress = (TextView) convertView.findViewById(R.id.item_bluetooth_device_address);
+			viewHolder.deviceStatus = (TextView) convertView.findViewById(R.id.item_bluetooth_device_status);
+
+			viewHolder.deviceStatus.setVisibility(View.GONE);
 			convertView.setTag(viewHolder);
 		}
 
 		BluetoothDevice selectedItem = mDataList.get(position);
 		viewHolder.deviceName.setText(selectedItem.getName());
 		viewHolder.deviceAddress.setText(selectedItem.getAddress());
+		if (selectedItem.getBondState() == BluetoothDevice.BOND_BONDED) {
+			viewHolder.deviceStatus.setVisibility(View.VISIBLE);
+		}
 		return convertView;
 	}
 }
