@@ -1,18 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:orientation="vertical">
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
     <TextView
-        android:id="@+id/communication_device_name"
+        android:id="@+id/communication_device_info_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="New Text"/>
+        android:text="communication_device_info_text"
+        android:textColor="#ffffff"
+        android:textSize="20sp" />
 
-    <TextView
-        android:id="@+id/communication_device_address"
-        android:layout_width="wrap_content"
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="10dp"
+        android:layout_weight="1"
+        android:background="#808080"
+        android:scrollbars="none">
+
+        <TextView
+            android:id="@+id/communication_message_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="communication_message_text"
+            android:textColor="#ffffff"
+            android:textSize="20sp" />
+    </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="New Text"/>
+        android:orientation="horizontal">
+
+        <EditText
+            android:id="@+id/communication_edittext"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="#ffffff"
+            android:textSize="20sp" />
+
+        <Button
+            android:id="@+id/communication_send_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Send"
+            android:textColor="#ffffff"
+            android:textSize="20sp" />
+    </LinearLayout>
 </LinearLayout>

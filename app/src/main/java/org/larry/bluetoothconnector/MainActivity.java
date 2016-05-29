@@ -37,8 +37,28 @@ public class MainActivity extends Activity {
             if (action.equals(BluetoothDevice.ACTION_FOUND)) {
                 mDeviceSearchProgress.setVisibility(View.GONE);
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                mDeviceList.add(device);
+
+                boolean exists = false;
+                for (int i = 0; i < mDeviceList.size(); i++) {
+                    BluetoothDevice existsDevice = mDeviceList.get(i);
+                    if (existsDevice.getAddress().equals(device.getAddress())) {
+                        exists = true;
+                        break;
+                    }
+                }
+                if (!exists) {
+                    mDeviceList.add(device);
+                }
                 setDeviceAdapter();
+            } else if (action.equals(BluetoothDevice.ACTION_BOND_STATE_CHANGED)) {
+                int state = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.ERROR);
+                int prevState = intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE, BluetoothDevice.ERROR);
+
+                if (state == BluetoothDevice.BOND_BONDED && prevState == BluetoothDevice.BOND_BONDING) {
+                    startCommunication();
+                } else if (state == BluetoothDevice.BOND_NONE && prevState == BluetoothDevice.BOND_BONDED) {
+
+                }
             }
             Log.i(LOG_TAG, "-------------------------");
         }
@@ -61,6 +81,7 @@ public class MainActivity extends Activity {
         initView();
 
         IntentFilter intentFilter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+        intentFilter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
         registerReceiver(mDeviceFoundReceiver, intentFilter);
     }
 
@@ -81,7 +102,7 @@ public class MainActivity extends Activity {
         Log.i(LOG_TAG, "onActivityResult");
         if (requestCode == REQUEST_ENABLE_BLUETOOTH) {
             if (resultCode == RESULT_OK) {
-                searchBluetoothDevice();
+                getPairedDevice();
             }
         }
         Log.i(LOG_TAG, "-------------------------");
@@ -100,19 +121,28 @@ public class MainActivity extends Activity {
         Log.i(LOG_TAG, "-------------------------");
     }
 
-    private void searchBluetoothDevice() {
-        Log.i(LOG_TAG, "searchBluetoothDevice");
-        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    private void getPairedDevice() {
+        Log.i(LOG_TAG, "getPairedDevice");
+        if (mBluetoothAdapter == null) {
+            mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+            mDeviceList = new ArrayList<BluetoothDevice>();
+        }
+
         if (mBluetoothAdapter != null) {
             if (mBluetoothAdapter.isEnabled()) {
-                if (mBluetoothAdapter.startDiscovery()) {
-                    mDeviceSearchProgress.setVisibility(View.VISIBLE);
-                    mDeviceList = new ArrayList<BluetoothDevice>();
-                    setDeviceAdapter();
-                    Log.v(LOG_TAG, "startDiscovery");
-                } else {
-                    Log.v(LOG_TAG, "startDiscovery fail");
+                mDeviceSearchProgress.setVisibility(View.VISIBLE);
+                mDeviceList.clear();
+                setDeviceAdapter();
+
+                BluetoothDevice[] pairedDevices = mBluetoothAdapter.getBondedDevices().toArray(new BluetoothDevice[]{});
+
+                for (int i = 0; i < pairedDevices.length; i++) {
+                    Log.d(LOG_TAG, "getName : " + pairedDevices[i].getName());
+                    Log.d(LOG_TAG, "getAddress : " + pairedDevices[i].getAddress());
+                    Log.d(LOG_TAG, "-------------------------");
+                    mDeviceList.add(pairedDevices[i]);
                 }
+                mBluetoothAdapter.startDiscovery();
             } else {
                 Intent enableBluetooth = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                 startActivityForResult(enableBluetooth, REQUEST_ENABLE_BLUETOOTH);
@@ -120,7 +150,6 @@ public class MainActivity extends Activity {
         } else {
             Toast.makeText(mActivity, "This device not support bluetooth.", Toast.LENGTH_SHORT).show();
         }
-        Log.i(LOG_TAG, "-------------------------");
     }
 
     private void paireDevice() {
@@ -156,7 +185,7 @@ public class MainActivity extends Activity {
         @Override
         public void onClick(View v) {
             Log.i(LOG_TAG, "onClick");
-            searchBluetoothDevice();
+            getPairedDevice();
             Log.i(LOG_TAG, "-------------------------");
         }
     };
