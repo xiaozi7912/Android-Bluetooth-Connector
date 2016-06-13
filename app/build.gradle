@@ -7,8 +7,8 @@ android {
         applicationId "org.xiaozi.bluetooth_connector"
         minSdkVersion 17
         targetSdkVersion 17
-        versionCode 2016052910
-        versionName '0.0.2'
+        versionCode 2016061318
+        versionName '0.0.3'
     }
     buildTypes {
         release {
