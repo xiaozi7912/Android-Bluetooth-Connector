@@ -1,6 +1,7 @@
 package org.larry.bluetoothconnector;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
@@ -9,20 +10,20 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.SlidingDrawer;
 import android.widget.Toast;
 
 import org.larry.bluetoothconnector.adapter.BluetoothDeviceAdapter;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 public class MainActivity extends Activity {
     private final String LOG_TAG = getClass().getSimpleName();
@@ -64,6 +65,7 @@ public class MainActivity extends Activity {
         }
     };
 
+    private Button mRenameDeviceButton = null;
     private Button mDeviceSearchButton = null;
     private ListView mDeviceListView = null;
     private ProgressBar mDeviceSearchProgress = null;
@@ -110,28 +112,46 @@ public class MainActivity extends Activity {
 
     private void initView() {
         Log.i(LOG_TAG, "initView");
+        mRenameDeviceButton = (Button) findViewById(R.id.main_device_rename);
         mDeviceSearchButton = (Button) findViewById(R.id.main_device_search);
         mDeviceListView = (ListView) findViewById(R.id.main_device_list);
         mDeviceSearchProgress = (ProgressBar) findViewById(R.id.main_device_search_progress);
 
         mDeviceSearchProgress.setVisibility(View.GONE);
 
+        mRenameDeviceButton.setOnClickListener(onClickListener);
         mDeviceSearchButton.setOnClickListener(onClickListener);
         mDeviceListView.setOnItemClickListener(onItemClickListener);
         Log.i(LOG_TAG, "-------------------------");
+    }
+
+    private boolean isBluetoothEnabled() {
+        if (mBluetoothAdapter == null) {
+            mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        }
+
+        if (mBluetoothAdapter != null) {
+            if (mBluetoothAdapter.isEnabled()) {
+                return true;
+            } else {
+                Intent enableBluetooth = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                startActivityForResult(enableBluetooth, REQUEST_ENABLE_BLUETOOTH);
+            }
+        }
+        return false;
     }
 
     private void getPairedDevice() {
         Log.i(LOG_TAG, "getPairedDevice");
         if (mBluetoothAdapter == null) {
             mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-            mDeviceList = new ArrayList<BluetoothDevice>();
         }
+
+        mDeviceList = new ArrayList<BluetoothDevice>();
 
         if (mBluetoothAdapter != null) {
             if (mBluetoothAdapter.isEnabled()) {
                 mDeviceSearchProgress.setVisibility(View.VISIBLE);
-                mDeviceList.clear();
                 setDeviceAdapter();
 
                 BluetoothDevice[] pairedDevices = mBluetoothAdapter.getBondedDevices().toArray(new BluetoothDevice[]{});
@@ -181,11 +201,49 @@ public class MainActivity extends Activity {
         Log.i(LOG_TAG, "-------------------------");
     }
 
+    private void showRenameDeviceDialog() {
+        Log.i(LOG_TAG, "showRenameDeviceDialog");
+        LayoutInflater layoutInflater = LayoutInflater.from(mActivity);
+        final AlertDialog alertDialog = new AlertDialog.Builder(mActivity).create();
+        View rootView = layoutInflater.inflate(R.layout.view_rename_device, null);
+        final EditText nameEditText = (EditText) rootView.findViewById(R.id.view_rename_deivce_name_edit);
+        Button submitButton = (Button) rootView.findViewById(R.id.view_rename_device_submit);
+
+        nameEditText.setText(mBluetoothAdapter.getName());
+
+        submitButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String inputName = nameEditText.getText().toString();
+
+                if (inputName.length() != 0) {
+                    mBluetoothAdapter.setName(inputName);
+                    Toast.makeText(mActivity, "Edit successed.", Toast.LENGTH_SHORT).show();
+                }
+                alertDialog.dismiss();
+            }
+        });
+
+        alertDialog.show();
+        alertDialog.setContentView(rootView);
+        alertDialog.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
+        Log.i(LOG_TAG, "-------------------------");
+    }
+
     private View.OnClickListener onClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
             Log.i(LOG_TAG, "onClick");
-            getPairedDevice();
+            switch (v.getId()) {
+                case R.id.main_device_rename:
+                    if (isBluetoothEnabled()) {
+                        showRenameDeviceDialog();
+                    }
+                    break;
+                case R.id.main_device_search:
+                    getPairedDevice();
+                    break;
+            }
             Log.i(LOG_TAG, "-------------------------");
         }
     };
